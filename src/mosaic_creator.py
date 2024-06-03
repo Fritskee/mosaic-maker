@@ -23,7 +23,12 @@ def load_images_from_folder(folder: str) -> List[np.ndarray]:
         for f in os.listdir(folder)
         if re.match(r".*\.(jpg|jpeg|png)$", f, re.IGNORECASE)
     ]
-    image_files.sort(key=lambda f: int(re.search(r"_(\d+)", f).group(1)))
+    
+    def extract_number(filename):
+        match = re.search(r"-([0-9]+)\.", filename)
+        return int(match.group(1)) if match else float('inf')
+
+    image_files.sort(key=extract_number)
 
     for filename in image_files:
         img_path = os.path.join(folder, filename)
@@ -70,6 +75,25 @@ def save_and_display_mosaic(mosaic: np.ndarray, output_path: str) -> None:
     plt.show()
 
 
+def sample_uniformly(images: List[np.ndarray], num_samples: int) -> List[np.ndarray]:
+    """Sample a specified number of images uniformly from a list of images.
+
+    Args:
+        images (List[np.ndarray]): List of images to sample from.
+        num_samples (int): Number of images to sample.
+
+    Returns:
+        List[np.ndarray]: List of uniformly sampled images.
+    """
+    total_images = len(images)
+    if total_images <= num_samples:
+        return images
+
+    step = total_images / num_samples
+    sampled_images = [images[int(i * step)] for i in range(num_samples)]
+    return sampled_images
+
+
 def main(folder: str, num_images: int, output_path: str) -> None:
     """Main function to create and save an image mosaic.
 
@@ -84,7 +108,8 @@ def main(folder: str, num_images: int, output_path: str) -> None:
             "The folder contains fewer images than the specified number for the mosaic."
         )
 
-    mosaic = create_image_mosaic(images, num_images)
+    sampled_images = sample_uniformly(images, num_images)
+    mosaic = create_image_mosaic(sampled_images, num_images)
     save_and_display_mosaic(mosaic, output_path)
 
 
